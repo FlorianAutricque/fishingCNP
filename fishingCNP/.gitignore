@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Données d’exercice (emails collectés — ne pas versionner)
+data/tracking.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
