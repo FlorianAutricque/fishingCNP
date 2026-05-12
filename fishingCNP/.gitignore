@@ -25,3 +25,5 @@ data/tracking.json
 *.njsproj
 *.sln
 *.sw?
+
+.env
