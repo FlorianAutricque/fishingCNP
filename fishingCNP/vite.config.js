@@ -6,11 +6,7 @@ import { trackingApiPlugin } from './vite.plugin.tracking-api.js'
 export default defineConfig({
   plugins: [react(), tailwindcss(), trackingApiPlugin()],
 
-  server: {
-    allowedHosts: "all"
-  },
-
   preview: {
-    allowedHosts: "all"
+    allowedHosts: true
   }
 })
