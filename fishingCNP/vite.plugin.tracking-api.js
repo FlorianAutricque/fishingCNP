@@ -195,15 +195,22 @@ export function trackingApiPlugin() {
             console.log('[tracking-api] insert visit:', error ?? 'OK')
           } else {
             const em = normalizeEmail(email)
-            const { error } = await sb.from('tracking').insert({
-              id: crypto.randomUUID(),
-              email: em,
-              step: type,
-              user_agent: ua,
-              device_hint: deviceHint(ua),
-              created_at: now,
-            })
-            console.log('[tracking-api] insert', type, ':', error ?? 'OK')
+
+              if (!em) {
+                console.log('[tracking-api] missing email', { type, email })
+                return sendJson(400, { ok: false, error: 'missing_email' })
+              }
+
+              const { error } = await sb.from('tracking').insert({
+                id: crypto.randomUUID(),
+                email: em,
+                step: type,
+                user_agent: ua,
+                device_hint: deviceHint(ua),
+                created_at: now,
+              })
+
+              console.log('[tracking-api] insert', type, ':', error ?? 'OK')
           }
         })
 

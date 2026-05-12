@@ -21,10 +21,26 @@ export function trackVisit() {
   return postTrack({ type: 'visit', visitorId, userAgent })
 }
 
+// export function trackNext(email) {
+//   const visitorId = getVisitorId()
+//   const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+//   return postTrack({ type: 'next', email, visitorId, userAgent })
+// }
+
 export function trackNext(email) {
+  const safeEmail = email?.trim()
+
+  if (!safeEmail) return
+
   const visitorId = getVisitorId()
   const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : ''
-  return postTrack({ type: 'next', email, visitorId, userAgent })
+
+  return postTrack({
+    type: 'next',
+    email: safeEmail,
+    visitorId,
+    userAgent,
+  })
 }
 
 export function trackSignIn(email) {
