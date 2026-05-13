@@ -12,7 +12,7 @@ export function formatFrDateTime(iso) {
 
 export function formatCompletionRate(completedFlows, nextClicks) {
   if (!nextClicks) return '—'
-  const pct = (completedFlows / nextClicks) * 100
+  const pct = Math.min((completedFlows / nextClicks) * 100, 100) 
   const rounded = Math.round(pct * 10) / 10
   return `${rounded.toLocaleString('fr-FR', {
     minimumFractionDigits: 0,
