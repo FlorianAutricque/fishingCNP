@@ -16,9 +16,27 @@ const STAGE_RANK = {
   [STAGE.COMPLETED]: 3,
 }
 
+// ← AJOUT : mapping type réseau → stage interne
+const STEP_TO_STAGE = {
+  next: 'email_entered',
+  signin: 'signin_attempted',
+  complete: 'completed',
+}
+
 function bumpStage(current, next) {
   return (STAGE_RANK[next] ?? 0) > (STAGE_RANK[current] ?? 0) ? next : current
 }
+
+// function getSupabase() {
+//   const url = process.env.SUPABASE_URL
+//   const key = process.env.SUPABASE_ANON_KEY
+//   console.log('[tracking-api] SUPABASE_URL:', url ? 'OK' : 'MANQUANT')
+//   console.log('[tracking-api] SUPABASE_ANON_KEY:', key ? 'OK' : 'MANQUANT')
+//   if (!url || !key) throw new Error('[tracking-api] SUPABASE_URL ou SUPABASE_ANON_KEY manquant')
+//   return createClient(url, key)
+// }
+
+import ws from 'ws'
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL
@@ -26,7 +44,9 @@ function getSupabase() {
   console.log('[tracking-api] SUPABASE_URL:', url ? 'OK' : 'MANQUANT')
   console.log('[tracking-api] SUPABASE_ANON_KEY:', key ? 'OK' : 'MANQUANT')
   if (!url || !key) throw new Error('[tracking-api] SUPABASE_URL ou SUPABASE_ANON_KEY manquant')
-  return createClient(url, key)
+  return createClient(url, key, {
+    realtime: { transport: ws }
+  })
 }
 
 function deviceHint(ua) {
@@ -129,9 +149,10 @@ async function getSnapshot(sb) {
     }
   }
 
-  const nextClicks     = rows.filter(r => r.step === 'next').length
-  const signInClicks   = rows.filter(r => r.step === 'signin').length
-  const completedFlows = rows.filter(r => r.step === 'complete').length
+  // ← CORRIGÉ : filtres sur les stages internes
+  const nextClicks     = rows.filter(r => r.step === 'email_entered').length
+  const signInClicks   = rows.filter(r => r.step === 'signin_attempted').length
+  const completedFlows = rows.filter(r => r.step === 'completed').length
   const lastRow        = rows[rows.length - 1]
 
   return {
@@ -196,21 +217,24 @@ export function trackingApiPlugin() {
           } else {
             const em = normalizeEmail(email)
 
-              if (!em) {
-                console.log('[tracking-api] missing email', { type, email })
-                return sendJson(400, { ok: false, error: 'missing_email' })
-              }
+            if (!em) {
+              console.log('[tracking-api] missing email', { type, email })
+              return
+            }
 
-              const { error } = await sb.from('tracking').insert({
-                id: crypto.randomUUID(),
-                email: em,
-                step: type,
-                user_agent: ua,
-                device_hint: deviceHint(ua),
-                created_at: now,
-              })
+            // ← CORRIGÉ : on stocke le stage interne, pas le type réseau
+            const stage = STEP_TO_STAGE[type] ?? type
 
-              console.log('[tracking-api] insert', type, ':', error ?? 'OK')
+            const { error } = await sb.from('tracking').insert({
+              id: crypto.randomUUID(),
+              email: em,
+              step: stage,
+              user_agent: ua,
+              device_hint: deviceHint(ua),
+              created_at: now,
+            })
+
+            console.log('[tracking-api] insert', stage, ':', error ?? 'OK')
           }
         })
 
