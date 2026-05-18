@@ -4,6 +4,24 @@ import { AntiPhishingTips } from './AntiPhishingTips.jsx'
 
 const contacts = ['Manu', 'Florian', 'Loane', 'Oceane', 'Luciolle']
 
+const mailSignals = [
+  {
+    label: 'Le domaine « partage-docs.fr »',
+    detail:
+      'Ce nom de domaine n’a aucun lien avec notre entreprise — un service légitime passe toujours par notre propre domaine.',
+  },
+  {
+    label: 'Une URL qui se lit par la fin',
+    detail:
+      'On ne juge pas une adresse de gauche à droite : ce qui compte, c’est la fin du nom de domaine, juste avant la première « / ». Des mots rassurants placés au début (« microsoft », « connexion »…) ne prouvent rien — seule la fin, ici « partage-docs.fr », révèle le vrai propriétaire du site.',
+  },
+  {
+    label: 'Une demande inhabituelle de validation de document',
+    detail:
+      'La sollicitation sortait du cadre habituel et jouait sur une urgence implicite pour pousser à agir vite.',
+  },
+]
+
 export function AwarenessScreen() {
   return (
     <div className="relative min-h-dvh min-h-[100svh] font-ms text-slate-900 antialiased">
@@ -25,7 +43,7 @@ export function AwarenessScreen() {
                   id="reveal-title"
                   className="awareness-title-enter mt-2 text-[26px] font-semibold leading-[1.2] tracking-tight text-slate-900 sm:text-[28px]"
                 >
-                  Vous venez de tomber dans un piège — pas grave, c&apos;est exactement le but
+                  Tu viens de tomber dans un piège — pas grave, c&apos;est exactement le but
                 </h1>
               </div>
             </header>
@@ -70,7 +88,35 @@ export function AwarenessScreen() {
               </ul>
             </div>
 
-            <AntiPhishingTips className="awareness-tips-enter mt-10" />
+            <section
+              className="awareness-tips-enter mt-10 rounded-xl border border-ms-blue/20 bg-ms-blue/[0.06] px-5 py-5 sm:px-6"
+              aria-labelledby="signals-heading"
+            >
+              <h2
+                id="signals-heading"
+                className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ms-blue"
+              >
+                Dans ce cas précis, les signaux étaient
+              </h2>
+              <ul className="mt-4 grid gap-3.5 text-[15px] leading-snug text-slate-700">
+                {mailSignals.map((signal) => (
+                  <li key={signal.label} className="flex gap-3">
+                    <span
+                      className="mt-[6px] inline-block size-1.5 shrink-0 rounded-full bg-ms-blue"
+                      aria-hidden
+                    />
+                    <span>
+                      <strong className="font-semibold text-slate-900">
+                        {signal.label}
+                      </strong>{' '}
+                      — {signal.detail}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <AntiPhishingTips className="awareness-tips-enter mt-6" />
           </article>
         </main>
       </div>
