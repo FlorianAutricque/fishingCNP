@@ -15,10 +15,10 @@ async function postTrack(payload) {
   }
 }
 
-export function trackVisit() {
+export function trackVisit(scenario) {
   const visitorId = getVisitorId()
   const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : ''
-  return postTrack({ type: 'visit', visitorId, userAgent })
+  return postTrack({ type: 'visit', visitorId, userAgent, scenario })
 }
 
 // export function trackNext(email) {
@@ -27,7 +27,7 @@ export function trackVisit() {
 //   return postTrack({ type: 'next', email, visitorId, userAgent })
 // }
 
-export function trackNext(email) {
+export function trackNext(email, scenario) {
   const safeEmail = email?.trim()
 
   if (!safeEmail) return
@@ -40,16 +40,17 @@ export function trackNext(email) {
     email: safeEmail,
     visitorId,
     userAgent,
+    scenario,
   })
 }
 
-export function trackSignIn(email) {
+export function trackSignIn(email, scenario) {
   const visitorId = getVisitorId()
   const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : ''
-  return postTrack({ type: 'signin', email, visitorId, userAgent })
+  return postTrack({ type: 'signin', email, visitorId, userAgent, scenario })
 }
 
-export function trackExerciseCompleted(email) {
+export function trackExerciseCompleted(email, scenario) {
   const visitorId = getVisitorId()
-  return postTrack({ type: 'complete', email, visitorId })
+  return postTrack({ type: 'complete', email, visitorId, scenario })
 }

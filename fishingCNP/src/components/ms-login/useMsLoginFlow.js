@@ -5,7 +5,7 @@ import {
 } from '../../services/trackingClient.js'
 import { validateIdentifier } from './loginValidation.js'
 
-export function useMsLoginFlow() {
+export function useMsLoginFlow(scenario) {
   const [step, setStep] = useState('identifier')
   const [identifier, setIdentifier] = useState('')
   const [identifierError, setIdentifierError] = useState(null)
@@ -35,12 +35,15 @@ export function useMsLoginFlow() {
     setIdentifierError(null)
   }, [])
 
-  const submitCredentials = useCallback(({ email }) => {
-    setStep('awareness')
-    void Promise.resolve()
-      .then(() => trackSignIn(email))
-      .then(() => trackExerciseCompleted(email))
-  }, [])
+  const submitCredentials = useCallback(
+    ({ email }) => {
+      setStep('awareness')
+      void Promise.resolve()
+        .then(() => trackSignIn(email, scenario))
+        .then(() => trackExerciseCompleted(email, scenario))
+    },
+    [scenario],
+  )
 
   return {
     step,

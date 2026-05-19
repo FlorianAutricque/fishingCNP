@@ -24,7 +24,7 @@ export function LoginPage({ scenario = 'nxlvl' }) {
     goToPassword,
     goToIdentifier,
     submitCredentials,
-  } = useMsLoginFlow()
+  } = useMsLoginFlow(scenario)
 
   const identifierActive = step === 'identifier'
   const passwordActive = step === 'password'
@@ -32,12 +32,12 @@ export function LoginPage({ scenario = 'nxlvl' }) {
   const loginPhaseActive = step !== 'awareness'
 
   useEffect(() => {
-    void trackVisit()
-  }, [])
+    void trackVisit(scenario)
+  }, [scenario])
 
   const handleIdentifierNext = () => {
     const ok = goToPassword()
-    if (ok) void trackNext(identifier.trim())
+    if (ok) void trackNext(identifier.trim(), scenario)
   }
 
   return (

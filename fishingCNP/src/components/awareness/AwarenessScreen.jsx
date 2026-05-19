@@ -104,7 +104,7 @@ export function AwarenessScreen({ scenario }) {
   useEffect(() => {
     // Les scénarios nxlvl/rgpd passent par LoginPage, qui track déjà la visite.
     // Le scénario cv affiche cet écran directement : on track ici.
-    if (scenario === 'cv') void trackVisit()
+    if (scenario === 'cv') void trackVisit(scenario)
   }, [scenario])
 
   if (!content) return null

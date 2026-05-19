@@ -1,5 +1,6 @@
 import { StageBadge } from './StageBadge.jsx'
 import { formatFrDateTime } from './formatters.js'
+import { scenarioLabel } from './scenarioLabels.js'
 
 export function ParticipantsTable({ participants }) {
   const rows = [...participants].sort(
@@ -18,10 +19,11 @@ export function ParticipantsTable({ participants }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-[760px] w-full border-collapse text-left text-[14px]">
+        <table className="min-w-[860px] w-full border-collapse text-left text-[14px]">
           <thead className="bg-slate-950/55 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
             <tr>
               <th className="px-5 py-3 sm:px-6">E-mail</th>
+              <th className="px-5 py-3 sm:px-6">Scénario</th>
               <th className="px-5 py-3 sm:px-6">Étape</th>
               <th className="px-5 py-3 sm:px-6">Dernière mise à jour</th>
               <th className="px-5 py-3 sm:px-6">Appareil</th>
@@ -32,7 +34,7 @@ export function ParticipantsTable({ participants }) {
               <tr>
                 <td
                   className="px-5 py-10 text-center text-slate-400 sm:px-6"
-                  colSpan={4}
+                  colSpan={5}
                 >
                   Aucune interaction enregistrée pour le moment.
                 </td>
@@ -45,6 +47,11 @@ export function ParticipantsTable({ participants }) {
                 >
                   <td className="max-w-[280px] px-5 py-4 font-medium text-slate-100 sm:px-6">
                     <span className="block truncate">{p.email}</span>
+                  </td>
+                  <td className="px-5 py-4 align-middle sm:px-6">
+                    <span className="inline-flex rounded-md bg-white/[0.06] px-2 py-0.5 text-[12px] font-medium text-slate-300 ring-1 ring-white/10">
+                      {scenarioLabel(p.scenario)}
+                    </span>
                   </td>
                   <td className="px-5 py-4 align-middle sm:px-6">
                     <StageBadge stage={p.stage} />

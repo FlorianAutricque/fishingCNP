@@ -7,6 +7,7 @@ import { DashboardStatCard } from './DashboardStatCard.jsx'
 import { ParticipantsTable } from './ParticipantsTable.jsx'
 import { ConfirmDialog } from './ConfirmDialog.jsx'
 import { formatCompletionRate, formatFrDateTime } from './formatters.js'
+import { SCENARIO_FILTERS } from './scenarioLabels.js'
 
 function IconUsers() {
   return (
@@ -58,6 +59,7 @@ export function DashboardPage() {
   const [snapshot, setSnapshot] = useState(null)
   const [confirmResetOpen, setConfirmResetOpen] = useState(false)
   const [resetBusy, setResetBusy] = useState(false)
+  const [scenarioFilter, setScenarioFilter] = useState('all')
 
   const load = useCallback(async ({ refresh = false } = {}) => {
     if (refresh) setLoadingData(true)
@@ -80,8 +82,17 @@ export function DashboardPage() {
     })
   }, [load])
 
-  const stats = snapshot?.stats
-  const participants = snapshot?.participants ?? []
+  const stats =
+    scenarioFilter === 'all'
+      ? snapshot?.stats
+      : snapshot?.statsByScenario?.[scenarioFilter]
+
+  const participants = useMemo(() => {
+    const all = snapshot?.participants ?? []
+    return scenarioFilter === 'all'
+      ? all
+      : all.filter((p) => p.scenario === scenarioFilter)
+  }, [snapshot, scenarioFilter])
 
   const completionLabel = useMemo(() => {
     if (!stats) return '—'
@@ -151,7 +162,30 @@ export function DashboardPage() {
           </p>
         ) : null}
 
-        <section className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="dash-meta-enter mt-8 flex flex-wrap items-center gap-3">
+          <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            Scénario
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {SCENARIO_FILTERS.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setScenarioFilter(f.key)}
+                aria-pressed={scenarioFilter === f.key}
+                className={`rounded-lg px-3.5 py-1.5 text-[13px] font-medium outline-none transition-colors focus-visible:ring-4 focus-visible:ring-sky-400/20 ${
+                  scenarioFilter === f.key
+                    ? 'bg-sky-500/20 text-sky-100 ring-1 ring-sky-400/40'
+                    : 'bg-white/[0.04] text-slate-300 ring-1 ring-white/[0.06] hover:bg-white/[0.08]'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <DashboardStatCard
             label="Visiteurs uniques"
             value={stats?.totalVisitors ?? 0}
