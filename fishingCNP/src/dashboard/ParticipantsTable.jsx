@@ -13,7 +13,8 @@ export function ParticipantsTable({ participants }) {
         <div>
           <h2 className="text-base font-semibold text-white">Participants</h2>
           <p className="mt-1 text-[13px] text-slate-400">
-            Adresses saisies dans le flux simulé — aucun mot de passe conservé.
+            Interactions enregistrées dans le flux simulé — aucun mot de passe
+            conservé.
           </p>
         </div>
       </div>
@@ -46,7 +47,19 @@ export function ParticipantsTable({ participants }) {
                   className="transition-colors hover:bg-white/[0.03]"
                 >
                   <td className="max-w-[280px] px-5 py-4 font-medium text-slate-100 sm:px-6">
-                    <span className="block truncate">{p.email}</span>
+                    {p.email ? (
+                      <span className="block truncate">{p.email}</span>
+                    ) : (
+                      <span className="block truncate italic text-slate-400">
+                        Anonyme
+                        {p.visitorId ? (
+                          <span className="text-slate-500">
+                            {' · '}
+                            {p.visitorId.slice(0, 8)}
+                          </span>
+                        ) : null}
+                      </span>
+                    )}
                   </td>
                   <td className="px-5 py-4 align-middle sm:px-6">
                     <span className="inline-flex rounded-md bg-white/[0.06] px-2 py-0.5 text-[12px] font-medium text-slate-300 ring-1 ring-white/10">

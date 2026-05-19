@@ -195,12 +195,43 @@ async function getSnapshot(sb) {
     }
   }
 
+  // Scénario cv : aucun e-mail n'est saisi (simple clic). On matérialise
+  // chaque visiteur cv comme une ligne anonyme dans le tableau, dédupliquée
+  // par visitor_id pour rester cohérent avec « Visiteurs uniques ».
+  const cvVisitors = new Map()
+  for (const row of rows) {
+    if (row.step !== 'visit') continue
+    if (scenarioKey(row.scenario) !== 'cv') continue
+    const vid = row.visitor_id
+    if (!vid) continue
+    const existing = cvVisitors.get(vid)
+    if (!existing) {
+      cvVisitors.set(vid, {
+        id: row.id,
+        email: null,
+        visitorId: vid,
+        stage: 'completed',
+        scenario: 'cv',
+        firstSeenAt: row.created_at,
+        updatedAt: row.created_at,
+        userAgent: row.user_agent ?? '',
+        deviceHint: row.device_hint ?? 'Inconnu',
+      })
+    } else {
+      existing.updatedAt = row.created_at
+      if (row.user_agent) {
+        existing.userAgent = row.user_agent
+        existing.deviceHint = row.device_hint ?? deviceHint(row.user_agent)
+      }
+    }
+  }
+
   return {
     schemaVersion: 2,
     stats: computeStats(rows),
     statsByScenario: statsByScenario(rows),
     visitorIds,
-    participants: [...participantsMap.values()],
+    participants: [...participantsMap.values(), ...cvVisitors.values()],
   }
 }
 
@@ -248,6 +279,8 @@ export function trackingApiPlugin() {
               visitor_id: String(visitorId).trim(),
               step: 'visit',
               scenario: sc,
+              user_agent: ua,
+              device_hint: deviceHint(ua),
               created_at: now,
             })
             console.log('[tracking-api] insert visit:', error ?? 'OK')
