@@ -5,7 +5,7 @@ import { LoginCard } from './LoginCard.jsx'
 import { PasswordCard } from './PasswordCard.jsx'
 import { SignInOptionsBar } from './SignInOptionsBar.jsx'
 import { LegalFooter } from './LegalFooter.jsx'
-import { AwarenessScreen } from './AwarenessScreen.jsx'
+import { AwarenessScreen } from '../awareness/AwarenessScreen.jsx'
 import { useMsLoginFlow } from './useMsLoginFlow.js'
 
 const panelMotion =
@@ -14,7 +14,7 @@ const panelMotion =
 const phaseMotion =
   'transition-[opacity] duration-[520ms] motion-reduce:transition-none ease-[cubic-bezier(0.16,1,0.3,1)] will-change-opacity'
 
-export function LoginPage() {
+export function LoginPage({ scenario = 'nxlvl' }) {
   const {
     step,
     identifier,
@@ -118,7 +118,7 @@ export function LoginPage() {
           aria-hidden={!awarenessActive}
           inert={!awarenessActive ? true : undefined}
         >
-          <AwarenessScreen />
+          <AwarenessScreen scenario={scenario} />
         </div>
       </div>
     </div>
