@@ -27,6 +27,20 @@ function bumpStage(current, next) {
   return (STAGE_RANK[next] ?? 0) > (STAGE_RANK[current] ?? 0) ? next : current
 }
 
+// Scénarios de sensibilisation suivis dans le dashboard.
+const KNOWN_SCENARIOS = ['nxlvl', 'rgpd', 'cv']
+
+// Renvoie un scénario connu, ou null si la valeur est absente/invalide.
+function cleanScenario(value) {
+  const v = String(value ?? '').trim().toLowerCase()
+  return KNOWN_SCENARIOS.includes(v) ? v : null
+}
+
+// Clé d'agrégation : un scénario connu, ou 'inconnu' pour les données héritées.
+function scenarioKey(value) {
+  return cleanScenario(value) ?? 'inconnu'
+}
+
 // function getSupabase() {
 //   const url = process.env.SUPABASE_URL
 //   const key = process.env.SUPABASE_ANON_KEY
@@ -95,6 +109,40 @@ function validateTrackPayload(body) {
 
 // ─── Helpers Supabase ────────────────────────────────────────────────────────
 
+// Statistiques agrégées sur un sous-ensemble de lignes (rows triées par date).
+function computeStats(rows) {
+  const visitorIds = [...new Set(
+    rows.filter(r => r.step === 'visit').map(r => r.visitor_id).filter(Boolean)
+  )]
+  const lastRow = rows[rows.length - 1]
+  return {
+    totalVisitors: visitorIds.length,
+    nextClicks: rows.filter(r => r.step === 'email_entered').length,
+    signInClicks: rows.filter(r => r.step === 'signin_attempted').length,
+    completedFlows: rows.filter(r => r.step === 'completed').length,
+    lastInteractionAt: lastRow?.created_at ?? null,
+  }
+}
+
+function emptyStats() {
+  return {
+    totalVisitors: 0,
+    nextClicks: 0,
+    signInClicks: 0,
+    completedFlows: 0,
+    lastInteractionAt: null,
+  }
+}
+
+// Stats par scénario : une entrée par scénario connu + 'inconnu' (données héritées).
+function statsByScenario(rows) {
+  const result = {}
+  for (const key of [...KNOWN_SCENARIOS, 'inconnu']) {
+    result[key] = computeStats(rows.filter(r => scenarioKey(r.scenario) === key))
+  }
+  return result
+}
+
 async function getSnapshot(sb) {
   const { data: rows, error } = await sb
     .from('tracking')
@@ -105,14 +153,9 @@ async function getSnapshot(sb) {
 
   if (!rows || rows.length === 0) {
     return {
-      schemaVersion: 1,
-      stats: {
-        totalVisitors: 0,
-        nextClicks: 0,
-        signInClicks: 0,
-        completedFlows: 0,
-        lastInteractionAt: null,
-      },
+      schemaVersion: 2,
+      stats: emptyStats(),
+      statsByScenario: statsByScenario([]),
       visitorIds: [],
       participants: [],
     }
@@ -133,6 +176,7 @@ async function getSnapshot(sb) {
         id: row.id,
         email: em,
         stage: row.step,
+        scenario: scenarioKey(row.scenario),
         firstSeenAt: row.created_at,
         updatedAt: row.created_at,
         userAgent: row.user_agent ?? '',
@@ -142,6 +186,8 @@ async function getSnapshot(sb) {
       const p = participantsMap.get(em)
       p.stage = bumpStage(p.stage, row.step)
       p.updatedAt = row.created_at
+      const sc = cleanScenario(row.scenario)
+      if (sc) p.scenario = sc
       if (row.user_agent) {
         p.userAgent = row.user_agent
         p.deviceHint = row.device_hint ?? deviceHint(row.user_agent)
@@ -149,21 +195,10 @@ async function getSnapshot(sb) {
     }
   }
 
-  // ← CORRIGÉ : filtres sur les stages internes
-  const nextClicks     = rows.filter(r => r.step === 'email_entered').length
-  const signInClicks   = rows.filter(r => r.step === 'signin_attempted').length
-  const completedFlows = rows.filter(r => r.step === 'completed').length
-  const lastRow        = rows[rows.length - 1]
-
   return {
-    schemaVersion: 1,
-    stats: {
-      totalVisitors: visitorIds.length,
-      nextClicks,
-      signInClicks,
-      completedFlows,
-      lastInteractionAt: lastRow?.created_at ?? null,
-    },
+    schemaVersion: 2,
+    stats: computeStats(rows),
+    statsByScenario: statsByScenario(rows),
     visitorIds,
     participants: [...participantsMap.values()],
   }
@@ -199,9 +234,10 @@ export function trackingApiPlugin() {
         const err = validateTrackPayload(body)
         if (err) return sendJson(400, { ok: false, error: err })
 
-        const { type, visitorId, email, userAgent } = body
+        const { type, visitorId, email, userAgent, scenario } = body
         const now = new Date().toISOString()
         const ua = typeof userAgent === 'string' ? userAgent : ''
+        const sc = cleanScenario(scenario)
 
         console.log('[tracking-api] track type:', type, 'email:', email ?? visitorId)
 
@@ -211,6 +247,7 @@ export function trackingApiPlugin() {
               id: crypto.randomUUID(),
               visitor_id: String(visitorId).trim(),
               step: 'visit',
+              scenario: sc,
               created_at: now,
             })
             console.log('[tracking-api] insert visit:', error ?? 'OK')
@@ -229,6 +266,7 @@ export function trackingApiPlugin() {
               id: crypto.randomUUID(),
               email: em,
               step: stage,
+              scenario: sc,
               user_agent: ua,
               device_hint: deviceHint(ua),
               created_at: now,
